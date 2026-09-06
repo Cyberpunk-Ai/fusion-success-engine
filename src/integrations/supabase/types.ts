@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          actor_name: string
+          actor_role: string
+          created_at: string
+          details: string
+          id: string
+          ip_address: string
+          severity: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string
+          actor_name?: string
+          actor_role?: string
+          created_at?: string
+          details?: string
+          id?: string
+          ip_address?: string
+          severity?: string
+          target_id?: string
+          target_type?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          actor_name?: string
+          actor_role?: string
+          created_at?: string
+          details?: string
+          id?: string
+          ip_address?: string
+          severity?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           created_at: string
@@ -86,6 +128,74 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          preview: string
+          updated_at: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preview?: string
+          updated_at?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preview?: string
+          updated_at?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_a_fkey"
+            columns: ["user_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user_b_fkey"
+            columns: ["user_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_preferences: {
+        Row: {
+          prefs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          prefs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          prefs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -146,6 +256,96 @@ export type Database = {
           {
             foreignKeyName: "likes_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          media_url: string | null
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          body: string
+          created_at: string
+          id: string
+          read: boolean
+          recipient_id: string
+          type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          recipient_id: string
+          type: string
+        }
+        Update: {
+          actor_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          recipient_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -340,6 +540,54 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          action_taken: string | null
+          author_id: string | null
+          author_name: string | null
+          created_at: string
+          details: string
+          id: string
+          reason: string
+          reporter_id: string
+          reporter_name: string
+          status: string
+          target_id: string
+          target_preview: string | null
+          target_type: string
+        }
+        Insert: {
+          action_taken?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          details?: string
+          id?: string
+          reason: string
+          reporter_id: string
+          reporter_name?: string
+          status?: string
+          target_id: string
+          target_preview?: string | null
+          target_type: string
+        }
+        Update: {
+          action_taken?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          details?: string
+          id?: string
+          reason?: string
+          reporter_id?: string
+          reporter_name?: string
+          status?: string
+          target_id?: string
+          target_preview?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       reposts: {
         Row: {
           created_at: string
@@ -367,6 +615,332 @@ export type Database = {
           {
             foreignKeyName: "reposts_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_messages_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_participants: {
+        Row: {
+          hand_raised: boolean
+          is_muted: boolean
+          is_speaking: boolean
+          joined_at: string
+          role: string
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          hand_raised?: boolean
+          is_muted?: boolean
+          is_speaking?: boolean
+          joined_at?: string
+          role?: string
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          hand_raised?: boolean
+          is_muted?: boolean
+          is_speaking?: boolean
+          joined_at?: string
+          role?: string
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_participants_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spaces: {
+        Row: {
+          created_at: string
+          duration: string | null
+          gradient: string
+          host_id: string
+          id: string
+          listeners: number
+          live: boolean
+          recorded: boolean
+          recording_url: string | null
+          starts_at: string | null
+          title: string
+          topic: string
+        }
+        Insert: {
+          created_at?: string
+          duration?: string | null
+          gradient?: string
+          host_id: string
+          id?: string
+          listeners?: number
+          live?: boolean
+          recorded?: boolean
+          recording_url?: string | null
+          starts_at?: string | null
+          title: string
+          topic?: string
+        }
+        Update: {
+          created_at?: string
+          duration?: string | null
+          gradient?: string
+          host_id?: string
+          id?: string
+          listeners?: number
+          live?: boolean
+          recorded?: boolean
+          recording_url?: string | null
+          starts_at?: string | null
+          title?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spaces_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          expires_at: string
+          gradient: string | null
+          id: string
+          likes_count: number
+          location: string | null
+          media_url: string | null
+          mood: string | null
+          stickers: Json
+          text: string | null
+          type: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          gradient?: string | null
+          id?: string
+          likes_count?: number
+          location?: string | null
+          media_url?: string | null
+          mood?: string | null
+          stickers?: Json
+          text?: string | null
+          type?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          gradient?: string | null
+          id?: string
+          likes_count?: number
+          location?: string | null
+          media_url?: string | null
+          mood?: string | null
+          stickers?: Json
+          text?: string | null
+          type?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_likes: {
+        Row: {
+          created_at: string
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_likes_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          ai_generation_enabled: boolean
+          announcement_banner: Json
+          auto_mod_strictness: string
+          id: number
+          maintenance_mode: boolean
+          max_upload_size_mb: number
+          rate_limit_requests_per_min: number
+          registration_enabled: boolean
+          spaces_audio_enabled: boolean
+          stories_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          ai_generation_enabled?: boolean
+          announcement_banner?: Json
+          auto_mod_strictness?: string
+          id?: number
+          maintenance_mode?: boolean
+          max_upload_size_mb?: number
+          rate_limit_requests_per_min?: number
+          registration_enabled?: boolean
+          spaces_audio_enabled?: boolean
+          stories_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ai_generation_enabled?: boolean
+          announcement_banner?: Json
+          auto_mod_strictness?: string
+          id?: number
+          maintenance_mode?: boolean
+          max_upload_size_mb?: number
+          rate_limit_requests_per_min?: number
+          registration_enabled?: boolean
+          spaces_audio_enabled?: boolean
+          stories_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tips: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          from_user_id: string
+          id: string
+          message: string
+          post_id: string | null
+          to_user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          from_user_id: string
+          id?: string
+          message?: string
+          post_id?: string | null
+          to_user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          from_user_id?: string
+          id?: string
+          message?: string
+          post_id?: string | null
+          to_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tips_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_to_user_id_fkey"
+            columns: ["to_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
