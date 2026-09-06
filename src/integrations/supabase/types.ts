@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       api_keys: {
         Row: {
+          call_count: number
           created_at: string
           id: string
           key_hash: string
@@ -27,6 +28,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          call_count?: number
           created_at?: string
           id?: string
           key_hash: string
@@ -38,6 +40,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          call_count?: number
           created_at?: string
           id?: string
           key_hash?: string
@@ -160,6 +163,57 @@ export type Database = {
             foreignKeyName: "branding_settings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calls: {
+        Row: {
+          answered_at: string | null
+          callee_id: string
+          caller_id: string
+          duration_seconds: number
+          ended_at: string | null
+          id: string
+          kind: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          answered_at?: string | null
+          callee_id: string
+          caller_id: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          kind?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          answered_at?: string | null
+          callee_id?: string
+          caller_id?: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          kind?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_callee_id_fkey"
+            columns: ["callee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_caller_id_fkey"
+            columns: ["caller_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1014,7 +1068,11 @@ export type Database = {
           ai_usage_date: string
           billing_cycle: string
           created_at: string
+          payment_method: Json
           plan: string
+          provider: string
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
           renews_at: string | null
           status: string
           updated_at: string
@@ -1025,7 +1083,11 @@ export type Database = {
           ai_usage_date?: string
           billing_cycle?: string
           created_at?: string
+          payment_method?: Json
           plan?: string
+          provider?: string
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
           renews_at?: string | null
           status?: string
           updated_at?: string
@@ -1036,7 +1098,11 @@ export type Database = {
           ai_usage_date?: string
           billing_cycle?: string
           created_at?: string
+          payment_method?: Json
           plan?: string
+          provider?: string
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
           renews_at?: string | null
           status?: string
           updated_at?: string
@@ -1235,6 +1301,44 @@ export type Database = {
           },
         ]
       }
+      user_preferences: {
+        Row: {
+          accent: string
+          larger_text: boolean
+          prefs: Json
+          reduce_motion: boolean
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent?: string
+          larger_text?: boolean
+          prefs?: Json
+          reduce_motion?: boolean
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent?: string
+          larger_text?: boolean
+          prefs?: Json
+          reduce_motion?: boolean
+          theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1343,25 +1447,31 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          logo_emoji: string
           name: string
           owner_id: string
           plan: string
+          seats_total: number
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          logo_emoji?: string
           name: string
           owner_id: string
           plan?: string
+          seats_total?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          logo_emoji?: string
           name?: string
           owner_id?: string
           plan?: string
+          seats_total?: number
           updated_at?: string
         }
         Relationships: [
