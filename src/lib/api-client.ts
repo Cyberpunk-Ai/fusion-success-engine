@@ -744,19 +744,17 @@ export async function getTrendingTags(): Promise<{ trendingTags: TrendingTag[] }
 /* --------------------------------------------------------------------- AI */
 
 export async function generateAIDraft(prompt: string, currentDraft?: string) {
-  const { generatePostDraftFn } = await import("@/lib/ai.functions");
   return generatePostDraftFn({ data: currentDraft ? { prompt, currentDraft } : { prompt } });
 }
 
 export async function generateAIStory(prompt: string) {
-  const { generateStoryCaptionFn } = await import("@/lib/ai.functions");
   return generateStoryCaptionFn({ data: { prompt } });
 }
 
 export async function summarizeSpaceAI(title: string, topic: string, messages: string[]) {
-  const { summarizeRoomFn } = await import("@/lib/ai.functions");
   return summarizeRoomFn({ data: { title, topic, messages } });
 }
+
 
 
 /* ------------------------------------------------------------------- tips */
