@@ -21,6 +21,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SpacesRouteImport } from './routes/spaces'
+import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,12 @@ const SpacesRoute = SpacesRouteImport.update({
   path: '/spaces',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaystackWebhookRoute =
+  ApiPublicPaystackWebhookRouteImport.update({
+    id: '/api/public/paystack-webhook',
+    path: '/api/public/paystack-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
   '/spaces': typeof SpacesRoute
+  '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +118,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
   '/spaces': typeof SpacesRoute
+  '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +134,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
   '/spaces': typeof SpacesRoute
+  '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/spaces'
+    | '/api/public/paystack-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/spaces'
+    | '/api/public/paystack-webhook'
   id:
     | '__root__'
     | '/'
@@ -169,6 +181,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/spaces'
+    | '/api/public/paystack-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +197,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SettingsRoute: typeof SettingsRoute
   SpacesRoute: typeof SpacesRoute
+  ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SpacesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/paystack-webhook': {
+      id: '/api/public/paystack-webhook'
+      path: '/api/public/paystack-webhook'
+      fullPath: '/api/public/paystack-webhook'
+      preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +309,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SettingsRoute: SettingsRoute,
   SpacesRoute: SpacesRoute,
+  ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

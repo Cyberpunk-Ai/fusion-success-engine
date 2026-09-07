@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { type PlanTier, type BillingCycle, PLAN_DETAILS } from "@/lib/plans";
 import { usePlan } from "@/lib/plan-state";
+import { startCheckoutFn, verifyCheckoutFn } from "@/lib/payments.functions";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-state";
 import { cn } from "@/lib/utils";
 
@@ -21,26 +23,8 @@ export function UpgradeModal() {
   const [featureHint, setFeatureHint] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<"plus" | "pro">("plus");
   const [cycle, setCycle] = useState<BillingCycle>("annual");
-  const [promoCode, setPromoCode] = useState("");
-  const [appliedDiscount, setAppliedDiscount] = useState<number | null>(null);
-  const [promoError, setPromoError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  // Mock checkout card state (clean placeholders instead of hardcoded dummy card)
-  const [cardForm, setCardForm] = useState({
-    cardNumber: "",
-    expiry: "",
-    cvc: "",
-    name: "",
-  });
-
-  // Sync user display name as default cardholder name when loaded
-  useEffect(() => {
-    if (user && !cardForm.name) {
-      setCardForm((prev) => ({ ...prev, name: user.display_name }));
-    }
-  }, [user]);
 
   useEffect(() => {
     const handleOpen = (e: any) => {
@@ -72,39 +56,17 @@ export function UpgradeModal() {
   const targetPlanDetails = PLAN_DETAILS[selectedPlan];
   const basePrice = cycle === "annual" ? targetPlanDetails.priceAnnual : targetPlanDetails.priceMonthly;
   const rawTotal = cycle === "annual" ? targetPlanDetails.annualBilledTotal : targetPlanDetails.priceMonthly;
-  const discountMultiplier = appliedDiscount ? (100 - appliedDiscount) / 100 : 1;
-  const finalTotal = (rawTotal * discountMultiplier).toFixed(2);
-
-  const handleApplyPromo = () => {
-    setPromoError(null);
-    const code = promoCode.trim().toUpperCase();
-    if (code === "CREATOR50" || code === "SPACES50" || code === "LUMEN50") {
-      setAppliedDiscount(50);
-    } else if (code === "VIP" || code === "EARLYACCESS") {
-      setAppliedDiscount(30);
-    } else {
-      setPromoError("Invalid code. Try 'CREATOR50' for 50% off");
-    }
-  };
+  const finalTotal = rawTotal.toFixed(2);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
     try {
-      await new Promise((r) => setTimeout(r, 700));
-      await upgradePlan(selectedPlan, cycle, {
-        brand: "Visa",
-        last4: "4242",
-        exp: cardForm.expiry,
-      });
+      const { checkoutUrl } = await startCheckoutFn({ data: { plan: selectedPlan, cycle } });
+      window.location.href = checkoutUrl;
+    } catch (err: any) {
       setIsProcessing(false);
-      setIsSuccess(true);
-      setTimeout(() => {
-        setIsSuccess(false);
-        setIsOpen(false);
-      }, 1800);
-    } catch {
-      setIsProcessing(false);
+      toast.error(err?.message || "Couldn't start checkout — please try again");
     }
   };
 
@@ -262,90 +224,19 @@ export function UpgradeModal() {
 
             {/* Checkout Form */}
             <form onSubmit={handleCheckout} className="mt-6 space-y-4">
-              {/* Promo Code Row */}
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Promo code (e.g. CREATOR50)"
-                    className="w-full rounded-xl border border-border/60 bg-background px-3.5 py-2.5 text-xs uppercase placeholder:normal-case focus:border-brand focus:outline-none"
-                  />
-                  {appliedDiscount && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-emerald-500">
-                      {appliedDiscount}% OFF Applied
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleApplyPromo}
-                  className="rounded-xl border border-border px-4 py-2.5 text-xs font-bold hover:bg-foreground/5 transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
-              {promoError && <p className="text-[0.7rem] text-rose-500">{promoError}</p>}
-
-              {/* Payment Details Input */}
-              <div className="rounded-2xl border border-border/60 p-3.5 space-y-3 bg-background">
+              <div className="rounded-2xl border border-border/60 bg-background p-3.5">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5 font-semibold text-foreground">
-                    <CreditCard className="h-4 w-4 text-brand" /> Payment Method
+                    <CreditCard className="h-4 w-4 text-brand" /> Secure checkout
                   </span>
                   <span className="flex items-center gap-1 text-[0.7rem]">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> 256-bit Encrypted
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Card details never touch this app
                   </span>
                 </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-3">
-                    <label className="text-[0.65rem] text-muted-foreground uppercase font-bold tracking-wider">Card Number</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="4242 4242 4242 4242"
-                      value={cardForm.cardNumber}
-                      onChange={(e) => setCardForm({ ...cardForm, cardNumber: e.target.value })}
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-mono focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none placeholder:text-muted-foreground/60"
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <label className="text-[0.65rem] text-muted-foreground uppercase font-bold tracking-wider">Cardholder Name</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder={user?.display_name || "Jane Doe"}
-                      value={cardForm.name}
-                      onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })}
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none placeholder:text-muted-foreground/60"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-[0.65rem] text-muted-foreground uppercase font-bold tracking-wider">Expiration Date</label>
-                    <input
-                      type="text"
-                      required
-                      value={cardForm.expiry}
-                      onChange={(e) => setCardForm({ ...cardForm, expiry: e.target.value })}
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-mono focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none placeholder:text-muted-foreground/60"
-                      placeholder="MM/YY"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <label className="text-[0.65rem] text-muted-foreground uppercase font-bold tracking-wider">CVC</label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={4}
-                      value={cardForm.cvc}
-                      onChange={(e) => setCardForm({ ...cardForm, cvc: e.target.value })}
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-xs text-center font-mono focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none placeholder:text-muted-foreground/60"
-                      placeholder="123"
-                    />
-                  </div>
-                </div>
+                <p className="mt-2 text-[0.7rem] text-muted-foreground">
+                  You'll finish payment on our payment provider's secure page, then land back here with
+                  your new plan active. Cards, bank transfer and mobile money are supported.
+                </p>
               </div>
 
               {/* Price & Summary */}
@@ -375,10 +266,10 @@ export function UpgradeModal() {
                   )}
                 >
                   {isProcessing ? (
-                    <span>Activating Plan...</span>
+                    <span>Opening secure checkout...</span>
                   ) : (
                     <>
-                      <span>Upgrade to {targetPlanDetails.name}</span>
+                      <span>Pay & upgrade to {targetPlanDetails.name}</span>
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
