@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Sparkles, X, Loader2, Wand2, Copy, Check, Lock, Zap } from "lucide-react";
+import { toast } from "sonner";
+
 import { generateAIDraft } from "@/lib/api-client";
 import { usePlan, openUpgradeModal } from "@/lib/plan-state";
 import { cn } from "@/lib/utils";
@@ -61,12 +63,7 @@ export function AiDraftModal({ isOpen, onClose, onSelectDraft, currentDraft }: A
       setResult(data);
       recordAiDraftUsage();
     } catch (err: any) {
-      console.warn("AI draft fallback active:", err);
-      setResult({
-        content: `Reflecting on today's creative flow: sometimes slowing down is the fastest way forward. What have you discovered lately that shifted your perspective? #mindset #creativity #design`,
-        suggestedTags: ["mindset", "creativity", "design", "buildinpublic"],
-      });
-      recordAiDraftUsage();
+      toast.error(err?.message || "Couldn't generate a draft — please try again");
     } finally {
       setLoading(false);
     }

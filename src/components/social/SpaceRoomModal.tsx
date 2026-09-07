@@ -304,15 +304,8 @@ function SpaceRoomModalContent({ space, onClose }: { space: Space; onClose: () =
         messages.map((m) => m.body)
       );
       setSummary(res);
-    } catch {
-      setSummary({
-        summary: `The room discussed key breakthroughs in ${space.topic}, focusing on workflow optimization, collaborative tools, and upcoming creative community projects.`,
-        keyTakeaways: [
-          "Cross-functional design systems elevate craft",
-          "Real-time feedback loops drive innovation",
-          "Next session scheduled for next week",
-        ],
-      });
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't summarize this room — please try again");
     } finally {
       setSummarizing(false);
     }

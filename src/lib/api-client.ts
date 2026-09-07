@@ -7,6 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { cacheProfiles, currentUser, currentUserId, rowToProfile } from "@/lib/profile-service";
 import { emitRealtime } from "@/lib/realtime";
 import { appConfig } from "@/lib/config";
+import {
+  generatePostDraftFn,
+  generateStoryCaptionFn,
+  summarizeRoomFn,
+} from "@/lib/ai.functions";
 import type {
   AdminCharts,
   AdminOverviewData,
@@ -743,38 +748,19 @@ export async function getTrendingTags(): Promise<{ trendingTags: TrendingTag[] }
 
 /* --------------------------------------------------------------------- AI */
 
-const AI_TONES = ["insightful", "playful", "bold", "reflective"];
-
 export async function generateAIDraft(prompt: string, currentDraft?: string) {
-  const tone = AI_TONES[Math.floor(Math.random() * AI_TONES.length)];
-  const seed = (currentDraft || prompt).trim();
-  const content = `${seed ? `${seed}\n\n` : ""}Here's a ${tone} take on ${prompt}: the best ideas come from shipping in public, listening closely, and iterating fast. What would you add?`;
-  const suggestedTags = prompt
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((w) => w.length > 3)
-    .slice(0, 3);
-  return { content, suggestedTags };
+  return generatePostDraftFn({ data: currentDraft ? { prompt, currentDraft } : { prompt } });
 }
 
 export async function generateAIStory(prompt: string) {
-  return {
-    text: `${prompt} — captured in the moment ✨`,
-    mood: "inspired",
-    suggestedStickers: ["✨", "🔥", "💫"],
-  };
+  return generateStoryCaptionFn({ data: { prompt } });
 }
 
 export async function summarizeSpaceAI(title: string, topic: string, messages: string[]) {
-  const highlights = messages.slice(-3);
-  return {
-    summary: `"${title}" focused on ${topic}. The room covered ${messages.length} messages of live discussion.`,
-    keyTakeaways:
-      highlights.length > 0
-        ? highlights
-        : [`${topic} is trending`, "Community energy is high", "Next session coming soon"],
-  };
+  return summarizeRoomFn({ data: { title, topic, messages } });
 }
+
+
 
 /* ------------------------------------------------------------------- tips */
 
