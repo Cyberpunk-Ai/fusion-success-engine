@@ -14,9 +14,10 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { AppShell } from "@/components/social/AppShell";
-import { useAuth } from "@/lib/auth-state";
+import { useAuth, updateUserSession } from "@/lib/auth-state";
 import { type PlanTier } from "@/lib/plans";
 import { usePlan, openUpgradeModal } from "@/lib/plan-state";
+import { verifyCheckoutFn } from "@/lib/payments.functions";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
