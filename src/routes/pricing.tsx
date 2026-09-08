@@ -202,7 +202,51 @@ export function PricingPage() {
         </div>
 
         <div className="mx-auto max-w-6xl px-4 py-12 md:py-16 space-y-16">
+          {checkout && (
+            <div
+              role="status"
+              aria-live="polite"
+              className={cn(
+                "glass-panel mx-auto flex max-w-2xl items-start gap-3 rounded-2xl border p-5 text-left",
+                checkout.state === "done"
+                  ? "border-emerald-500/40"
+                  : "border-brand/30",
+              )}
+            >
+              {checkout.state === "done" ? (
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+              ) : (
+                <Sparkles className="mt-0.5 h-5 w-5 shrink-0 animate-pulse text-brand" />
+              )}
+              <div className="space-y-1">
+                <p className="font-bold text-foreground">
+                  {checkout.state === "verifying"
+                    ? "Confirming your payment…"
+                    : checkout.state === "done"
+                      ? `Welcome back — you're on ${checkout.plan.toUpperCase()}`
+                      : "Payment not completed yet"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {checkout.state === "verifying"
+                    ? "This only takes a moment. Please don't close this page."
+                    : checkout.state === "done"
+                      ? "Your badge, higher limits and creator tools are unlocked right now."
+                      : "If you finished paying, give it a minute and refresh — we'll activate it automatically."}
+                </p>
+                {checkout.state === "done" && (
+                  <Link
+                    to="/feed"
+                    className="inline-flex items-center gap-1 pt-1 text-sm font-semibold text-brand hover:underline"
+                  >
+                    Start creating <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Header Section matching Homepage Typography & Voice */}
+
           <div className="mx-auto max-w-3xl text-center space-y-4">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 border border-brand/20 px-3.5 py-1 text-xs font-bold text-violet-700 dark:text-violet-300 shadow-xs">
               <Sparkles className="h-3.5 w-3.5 text-brand" />
