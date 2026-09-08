@@ -46,16 +46,46 @@ export function PricingPage() {
   const { isLoggedIn } = useAuth();
   const { currentPlan } = usePlan();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [checkout, setCheckout] = useState<
+    { state: "verifying" } | { state: "done"; plan: string } | { state: "pending" } | null
+  >(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const requestedPlan = params.get("plan") || params.get("tier");
-      if (requestedPlan === "plus" || requestedPlan === "pro") {
-        openUpgradeModal(requestedPlan === "plus" ? "Upgrade to Plus" : "Upgrade to Pro");
-      }
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const requestedPlan = params.get("plan") || params.get("tier");
+    if (requestedPlan === "plus" || requestedPlan === "pro") {
+      openUpgradeModal(requestedPlan === "plus" ? "Upgrade to Plus" : "Upgrade to Pro");
     }
+
+    const reference = params.get("reference") || params.get("trxref");
+    if (!reference) return;
+
+    const clean = () => {
+      const url = new URL(window.location.href);
+      ["reference", "trxref", "checkout"].forEach((k) => url.searchParams.delete(k));
+      window.history.replaceState({}, "", url.pathname + url.search);
+    };
+
+    setCheckout({ state: "verifying" });
+    verifyCheckoutFn({ data: { reference } })
+      .then((res: any) => {
+        clean();
+        if (res?.activated) {
+          updateUserSession({ plan: res.plan });
+          setCheckout({ state: "done", plan: String(res.plan) });
+          toast.success(`Welcome back — your ${String(res.plan).toUpperCase()} plan is live!`);
+        } else {
+          setCheckout({ state: "pending" });
+        }
+      })
+      .catch((err: any) => {
+        clean();
+        setCheckout(null);
+        toast.error(err?.message || "We couldn't confirm that payment");
+      });
   }, []);
+
 
   // Exact plans structure and copy matching the homepage pricing
   const plans = [
