@@ -50,7 +50,12 @@ const listeners = new Set<() => void>();
 function commit(next: DeveloperState) {
   state = next;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // Full secrets are shown once and never written to disk.
+    const safe = {
+      ...state,
+      apiKeys: state.apiKeys.map(({ fullKey: _drop, ...rest }) => rest),
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
   } catch {
     /* storage unavailable */
   }
@@ -63,13 +68,19 @@ function randomToken() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** Only the hash is stored, so a leaked database row can't be used as a key. */
+async function hashToken(token: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 async function hydrate() {
   if (!signedInProfileId()) return;
   const [apiKeys, webhooks] = await Promise.all([
     loadOwnedRows<ApiKey>("api_keys", (row) => ({
       id: String(row.id),
       name: String(row.name),
-      maskedKey: `${row.prefix}••••••••${String(row.key_hash).slice(-6)}`,
+      maskedKey: `${row.prefix}••••••••${String(row.key_hash).slice(-4)}`,
       createdAt: new Date(row.created_at).toLocaleDateString(),
       lastUsed: row.last_used_at ? new Date(row.last_used_at).toLocaleDateString() : "Never",
     })),
@@ -103,7 +114,7 @@ export function useDeveloper() {
     const row = await insertOwnedRow("api_keys", {
       name,
       prefix: "sk_live_",
-      key_hash: token.slice(-12),
+      key_hash: await hashToken(token),
       scopes: ["read"],
     });
     const key: ApiKey = {
@@ -116,6 +127,14 @@ export function useDeveloper() {
     };
     commit({ ...state, apiKeys: [key, ...state.apiKeys] });
     return key;
+  }
+
+  /** Clears the one-time reveal from memory after the user copies it. */
+  function forgetApiKeySecret(id: string) {
+    commit({
+      ...state,
+      apiKeys: state.apiKeys.map((k) => (k.id === id ? { ...k, fullKey: undefined } : k)),
+    });
   }
 
   function revokeApiKey(id: string) {
@@ -146,6 +165,7 @@ export function useDeveloper() {
     webhooks: snapshot.webhooks,
     totalApiCallsThisMonth: snapshot.totalApiCallsThisMonth,
     generateApiKey,
+    forgetApiKeySecret,
     revokeApiKey,
     addWebhook,
     removeWebhook,
