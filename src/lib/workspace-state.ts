@@ -96,9 +96,9 @@ async function hydrate() {
     id: String(row.id),
     name: String(row.name),
     slug: String(row.name).toLowerCase().replace(/\s+/g, "-"),
-    logoEmoji: "🚀",
+    logoEmoji: String(row.logo_emoji || "🚀"),
     createdAt: new Date(row.created_at).toLocaleDateString(),
-    seatsTotal: 5,
+    seatsTotal: Number(row.seats_total ?? 5),
     members: members
       .filter((m) => m.workspace_id === row.id)
       .map((m) => ({
@@ -174,7 +174,7 @@ export function useWorkspace() {
       if (userId) {
         const { data } = await db
           .from("workspaces")
-          .insert({ name, owner_id: userId })
+          .insert({ name, owner_id: userId, logo_emoji: logoEmoji })
           .select("id")
           .maybeSingle();
         if (data?.id) id = String(data.id);

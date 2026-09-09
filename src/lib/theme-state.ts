@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 
+import { attachRemoteRecord } from "@/lib/remote-store";
+
 export type ThemeMode = "light" | "dark" | "system";
 export type ThemeAccent = "violet" | "amber" | "emerald" | "rose" | "indigo";
 
@@ -68,12 +70,67 @@ export interface ThemeSettings {
   largerText: boolean;
 }
 
-let inMemoryTheme: ThemeSettings = {
+const THEME_DEFAULTS: ThemeSettings = {
   mode: "system",
   accent: "violet",
   reduceMotion: false,
   largerText: false,
 };
+
+function readStoredTheme(): ThemeSettings {
+  if (typeof window === "undefined") return THEME_DEFAULTS;
+  try {
+    const mode = window.localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null;
+    const accent = window.localStorage.getItem(ACCENT_STORAGE_KEY) as ThemeAccent | null;
+    return {
+      mode: mode === "light" || mode === "dark" || mode === "system" ? mode : THEME_DEFAULTS.mode,
+      accent: accent && accent in ACCENT_PALETTES ? accent : THEME_DEFAULTS.accent,
+      reduceMotion: window.localStorage.getItem(MOTION_STORAGE_KEY) === "1",
+      largerText: window.localStorage.getItem(TEXT_STORAGE_KEY) === "1",
+    };
+  } catch {
+    return THEME_DEFAULTS;
+  }
+}
+
+let inMemoryTheme: ThemeSettings = readStoredTheme();
+
+function persistTheme(settings: ThemeSettings) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, settings.mode);
+    window.localStorage.setItem(ACCENT_STORAGE_KEY, settings.accent);
+    window.localStorage.setItem(MOTION_STORAGE_KEY, settings.reduceMotion ? "1" : "0");
+    window.localStorage.setItem(TEXT_STORAGE_KEY, settings.largerText ? "1" : "0");
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/** Keeps appearance choices with the account, so they follow the user across devices. */
+const remoteTheme = attachRemoteRecord<ThemeSettings>({
+  table: "user_preferences",
+  fromRow: (row) => ({
+    mode: (row.theme ?? "system") as ThemeMode,
+    accent: (row.accent ?? "violet") as ThemeAccent,
+    reduceMotion: Boolean(row.reduce_motion),
+    largerText: Boolean(row.larger_text),
+  }),
+  toRow: (s) => ({
+    theme: s.mode,
+    accent: s.accent,
+    reduce_motion: s.reduceMotion,
+    larger_text: s.largerText,
+  }),
+  apply: (patch) => {
+    inMemoryTheme = { ...inMemoryTheme, ...patch };
+    persistTheme(inMemoryTheme);
+    applyThemeToDOM(inMemoryTheme);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT));
+    }
+  },
+});
 
 export function getStoredThemeSettings(): ThemeSettings {
   if (typeof window === "undefined") {
@@ -120,7 +177,13 @@ export function applyThemeToDOM(settings: ThemeSettings) {
 }
 
 export function useTheme() {
-  const [settings, setSettings] = useState<ThemeSettings>(getStoredThemeSettings);
+  // Start from defaults so the server-rendered markup matches the first client
+  // render; the saved choice is applied right after hydration.
+  const [settings, setSettings] = useState<ThemeSettings>(THEME_DEFAULTS);
+
+  useEffect(() => {
+    setSettings(getStoredThemeSettings());
+  }, []);
 
   useEffect(() => {
     applyThemeToDOM(settings);
@@ -167,7 +230,9 @@ export function useTheme() {
     setSettings((prev) => {
       const next = { ...prev, ...partial };
       inMemoryTheme = next;
+      persistTheme(next);
       applyThemeToDOM(next);
+      remoteTheme.push(next);
       return next;
     });
     queueMicrotask(() => {
@@ -186,7 +251,9 @@ export function useTheme() {
       const nextMode: ThemeMode = isCurrentlyDark ? "light" : "dark";
       const next = { ...prev, mode: nextMode };
       inMemoryTheme = next;
+      persistTheme(next);
       applyThemeToDOM(next);
+      remoteTheme.push(next);
       return next;
     });
     queueMicrotask(() => {
