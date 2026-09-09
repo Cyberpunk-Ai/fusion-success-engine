@@ -487,13 +487,28 @@ export async function getFollowingIds(): Promise<string[]> {
   return ((data ?? []) as any[]).map((r) => String(r.target_id));
 }
 
+/** Signed links live for a year, then can be refreshed with `signedMediaUrl`. */
+const MEDIA_URL_TTL_SECONDS = 60 * 60 * 24 * 365;
+
+/** Creates a fresh signed link for a stored object path in the private area. */
+export async function signedMediaUrl(path: string, ttlSeconds = MEDIA_URL_TTL_SECONDS) {
+  const { data, error } = await supabase.storage.from("media").createSignedUrl(path, ttlSeconds);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
 export async function uploadMedia(file: File, folder: "avatars" | "posts" | "stories" | "media" | "messages" = "media") {
   const ext = file.name.split(".").pop() || "bin";
-  const path = `${folder}/${me()}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true });
+  const safeExt = ext.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8) || "bin";
+  const path = `${folder}/${me()}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+  const { error } = await supabase.storage.from("media").upload(path, file, {
+    upsert: true,
+    contentType: file.type || undefined,
+  });
   if (error) throw error;
-  const { data } = supabase.storage.from("media").getPublicUrl(path);
-  return { url: data.publicUrl, path };
+  // The media bucket is private, so public URLs would 400 — sign the object.
+  const url = await signedMediaUrl(path);
+  return { url, path };
 }
 
 /* ----------------------------------------------------------------- spaces */
