@@ -177,7 +177,13 @@ export function applyThemeToDOM(settings: ThemeSettings) {
 }
 
 export function useTheme() {
-  const [settings, setSettings] = useState<ThemeSettings>(getStoredThemeSettings);
+  // Start from defaults so the server-rendered markup matches the first client
+  // render; the saved choice is applied right after hydration.
+  const [settings, setSettings] = useState<ThemeSettings>(THEME_DEFAULTS);
+
+  useEffect(() => {
+    setSettings(getStoredThemeSettings());
+  }, []);
 
   useEffect(() => {
     applyThemeToDOM(settings);
