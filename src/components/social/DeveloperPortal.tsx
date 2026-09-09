@@ -32,6 +32,7 @@ export function DeveloperPortal() {
     webhooks,
     totalApiCallsThisMonth,
     generateApiKey,
+    forgetApiKeySecret,
     revokeApiKey,
     addWebhook,
     removeWebhook,
@@ -191,16 +192,23 @@ const { data: posts } = await spaces.posts.list({
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(k.fullKey || k.maskedKey);
-                    toast.success("API key copied to clipboard!");
-                  }}
-                  className="flex items-center gap-1 rounded-xl border border-border px-2.5 py-1.5 font-bold hover:bg-muted transition-colors cursor-pointer"
-                >
-                  <Copy className="h-3 w-3" />
-                  <span>Copy</span>
-                </button>
+                {k.fullKey ? (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(k.fullKey!);
+                      forgetApiKeySecret(k.id);
+                      toast.success("Key copied — it won't be shown again");
+                    }}
+                    className="flex items-center gap-1 rounded-xl border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 font-bold text-amber-600 transition-colors hover:bg-amber-500/20 cursor-pointer dark:text-amber-400"
+                  >
+                    <Copy className="h-3 w-3" />
+                    <span>Copy once</span>
+                  </button>
+                ) : (
+                  <span className="rounded-xl border border-border px-2.5 py-1.5 text-[0.65rem] font-semibold text-muted-foreground">
+                    Shown once only
+                  </span>
+                )}
                 {isPro && (
                   <button
                     onClick={() => {
