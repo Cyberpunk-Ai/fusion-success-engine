@@ -10,7 +10,7 @@ import {
   MessageSquare,
   Sparkles,
 } from "lucide-react";
-import { useSupport, type SupportTicket } from "@/lib/support-state";
+import { useSupport, useTicketThread, type SupportTicket } from "@/lib/support-state";
 import { usePlan, openUpgradeModal } from "@/lib/plan-state";
 import { Avatar } from "@/components/social/Avatar";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,21 @@ export function PrioritySupportDesk() {
   const [category, setCategory] = useState<SupportTicket["category"]>("Creator Studio");
   const [priority, setPriority] = useState<SupportTicket["priority"]>("Urgent (15 min SLA)");
   const [message, setMessage] = useState("");
+  const [openTicketId, setOpenTicketId] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const thread = useTicketThread(openTicketId);
+
+  async function handleReply(e: React.FormEvent) {
+    e.preventDefault();
+    const text = replyDraft.trim();
+    if (!text) return;
+    const ok = await thread.reply(text);
+    if (ok) {
+      setReplyDraft("");
+    } else {
+      toast.error("Reply could not be sent. Please try again.");
+    }
+  }
 
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
