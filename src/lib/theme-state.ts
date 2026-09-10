@@ -84,7 +84,7 @@ function readStoredTheme(): ThemeSettings {
     const accent = window.localStorage.getItem(ACCENT_STORAGE_KEY) as ThemeAccent | null;
     return {
       mode: mode === "light" || mode === "dark" || mode === "system" ? mode : THEME_DEFAULTS.mode,
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      
       accent: accent && accent in ACCENT_PALETTES ? accent : THEME_DEFAULTS.accent,
       reduceMotion: window.localStorage.getItem(MOTION_STORAGE_KEY) === "1",
       largerText: window.localStorage.getItem(TEXT_STORAGE_KEY) === "1",
