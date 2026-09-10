@@ -10,7 +10,7 @@ import {
   MessageSquare,
   Sparkles,
 } from "lucide-react";
-import { useSupport, type SupportTicket } from "@/lib/support-state";
+import { useSupport, useTicketThread, type SupportTicket } from "@/lib/support-state";
 import { usePlan, openUpgradeModal } from "@/lib/plan-state";
 import { Avatar } from "@/components/social/Avatar";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,21 @@ export function PrioritySupportDesk() {
   const [category, setCategory] = useState<SupportTicket["category"]>("Creator Studio");
   const [priority, setPriority] = useState<SupportTicket["priority"]>("Urgent (15 min SLA)");
   const [message, setMessage] = useState("");
+  const [openTicketId, setOpenTicketId] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const thread = useTicketThread(openTicketId);
+
+  async function handleReply(e: React.FormEvent) {
+    e.preventDefault();
+    const text = replyDraft.trim();
+    if (!text) return;
+    const ok = await thread.reply(text);
+    if (ok) {
+      setReplyDraft("");
+    } else {
+      toast.error("Reply could not be sent. Please try again.");
+    }
+  }
 
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,34 +129,107 @@ export function PrioritySupportDesk() {
           <span className="text-xs text-muted-foreground font-semibold">{tickets.length} Tickets</span>
         </div>
 
-        <div className="divide-y divide-border/60 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
-          {tickets.map((t) => (
-            <div key={t.id} className="py-3.5 space-y-2 text-xs">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{t.id}</span>
-                  <span className="font-bold text-foreground">{t.subject}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded bg-muted px-2 py-0.5 text-[0.65rem] font-bold text-muted-foreground">
-                    {t.category}
-                  </span>
-                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.65rem] font-extrabold text-amber-600 dark:text-amber-400 capitalize">
-                    ● {t.status.replace("_", " ")}
-                  </span>
-                </div>
-              </div>
+        <div className="divide-y divide-border/60 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
+          {tickets.map((t) => {
+            const isOpen = openTicketId === t.id;
+            return (
+              <div key={t.id} className="py-3.5 space-y-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenTicketId(isOpen ? null : t.id);
+                    setReplyDraft("");
+                  }}
+                  className="w-full space-y-2 text-left cursor-pointer"
+                  aria-expanded={isOpen}
+                >
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{t.id.slice(0, 8)}</span>
+                      <span className="truncate font-bold text-foreground">{t.subject}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="hidden rounded bg-muted px-2 py-0.5 text-[0.65rem] font-bold text-muted-foreground sm:inline">
+                        {t.category}
+                      </span>
+                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.65rem] font-extrabold text-amber-600 capitalize dark:text-amber-400">
+                        ● {t.status.replace("_", " ")}
+                      </span>
+                    </div>
+                  </div>
 
-              <p className="text-muted-foreground bg-muted/20 rounded-xl p-2.5 border border-border/40">
-                "{t.lastMessage}"
-              </p>
+                  <p className="rounded-xl border border-border/40 bg-muted/20 p-2.5 text-muted-foreground">
+                    "{t.lastMessage}"
+                  </p>
 
-              <div className="flex items-center justify-between text-[0.65rem] text-muted-foreground pt-0.5">
-                <span>Priority: {t.priority}</span>
-                <span>Updated {t.updatedAt}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-1 pt-0.5 text-[0.65rem] text-muted-foreground">
+                    <span>Priority: {t.priority}</span>
+                    <span className="flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      {isOpen ? "Hide conversation" : "View & reply"}
+                    </span>
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/10 p-3">
+                    <div className="max-h-56 space-y-2 overflow-y-auto custom-scrollbar pr-1">
+                      {thread.loading && <p className="text-muted-foreground">Loading conversation…</p>}
+                      {!thread.loading && thread.messages.length === 0 && (
+                        <p className="text-muted-foreground">
+                          No replies yet — our concierge will respond shortly.
+                        </p>
+                      )}
+                      {thread.messages.map((m) => (
+                        <div
+                          key={m.id}
+                          className={cn(
+                            "max-w-[85%] rounded-2xl px-3 py-2 leading-relaxed",
+                            m.fromSupport
+                              ? "bg-card border border-border/60"
+                              : "ml-auto bg-gradient-to-r from-amber-500 to-orange-500 text-white",
+                          )}
+                        >
+                          <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                          <p
+                            className={cn(
+                              "mt-1 text-[0.6rem]",
+                              m.fromSupport ? "text-muted-foreground" : "text-white/70",
+                            )}
+                          >
+                            {m.fromSupport ? "Support" : "You"} · {m.createdAt}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <form onSubmit={handleReply} className="flex items-end gap-2">
+                      <textarea
+                        rows={2}
+                        value={replyDraft}
+                        onChange={(e) => setReplyDraft(e.target.value)}
+                        placeholder="Write a reply…"
+                        className="min-w-0 flex-1 resize-none rounded-2xl border border-border bg-card p-2.5 text-xs outline-none focus:border-amber-500"
+                      />
+                      <button
+                        type="submit"
+                        disabled={thread.sending || !replyDraft.trim()}
+                        className="flex shrink-0 items-center gap-1 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-3.5 py-2.5 text-xs font-bold text-white disabled:opacity-50 cursor-pointer"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{thread.sending ? "Sending" : "Send"}</span>
+                      </button>
+                    </form>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
+          {tickets.length === 0 && (
+            <p className="py-6 text-center text-xs text-muted-foreground">
+              No tickets yet. Open one and our concierge replies within 15 minutes.
+            </p>
+          )}
         </div>
       </div>
 

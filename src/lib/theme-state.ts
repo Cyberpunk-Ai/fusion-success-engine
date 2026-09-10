@@ -71,7 +71,7 @@ export interface ThemeSettings {
 }
 
 const THEME_DEFAULTS: ThemeSettings = {
-  mode: "system",
+  mode: "light",
   accent: "violet",
   reduceMotion: false,
   largerText: false,
@@ -84,6 +84,7 @@ function readStoredTheme(): ThemeSettings {
     const accent = window.localStorage.getItem(ACCENT_STORAGE_KEY) as ThemeAccent | null;
     return {
       mode: mode === "light" || mode === "dark" || mode === "system" ? mode : THEME_DEFAULTS.mode,
+      
       accent: accent && accent in ACCENT_PALETTES ? accent : THEME_DEFAULTS.accent,
       reduceMotion: window.localStorage.getItem(MOTION_STORAGE_KEY) === "1",
       largerText: window.localStorage.getItem(TEXT_STORAGE_KEY) === "1",
@@ -111,7 +112,7 @@ function persistTheme(settings: ThemeSettings) {
 const remoteTheme = attachRemoteRecord<ThemeSettings>({
   table: "user_preferences",
   fromRow: (row) => ({
-    mode: (row.theme ?? "system") as ThemeMode,
+    mode: (row.theme ?? "light") as ThemeMode,
     accent: (row.accent ?? "violet") as ThemeAccent,
     reduceMotion: Boolean(row.reduce_motion),
     largerText: Boolean(row.larger_text),
