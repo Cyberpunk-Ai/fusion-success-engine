@@ -220,6 +220,31 @@ function ConvsSkeleton() {
   );
 }
 
+const AUDIO_CALL_PREFIX = "📞 Audio call";
+const VIDEO_CALL_PREFIX = "📹 Video call";
+
+/** Turns a raw message body into the short label shown in the inbox list. */
+function describePreview(msg: Message | null, fallback: string) {
+  if (!msg) return { label: fallback, kind: "text" as const };
+  const body = msg.body ?? "";
+  if (body.startsWith("🎙️ Voice Note")) return { label: "Voice note", kind: "voice" as const };
+  if (body.startsWith(AUDIO_CALL_PREFIX)) return { label: body.replace("📞 ", ""), kind: "audio" as const };
+  if (body.startsWith(VIDEO_CALL_PREFIX)) return { label: body.replace("📹 ", ""), kind: "video" as const };
+  const looksLikeMedia =
+    Boolean(msg.media_url) || /^https?:\/\/\S+$/.test(body.trim());
+  if (looksLikeMedia) return { label: "Photo", kind: "photo" as const };
+  return { label: body || fallback, kind: "text" as const };
+}
+
+function PreviewIcon({ kind }: { kind: "text" | "photo" | "voice" | "audio" | "video" }) {
+  const cls = "h-3.5 w-3.5 shrink-0 text-muted-foreground";
+  if (kind === "photo") return <ImageIcon className={cls} />;
+  if (kind === "voice") return <Mic className={cls} />;
+  if (kind === "audio") return <Phone className={cls} />;
+  if (kind === "video") return <Video className={cls} />;
+  return null;
+}
+
 function MessagesPage() {
   const search = Route.useSearch();
   const targetUserParam = search.user || search.id;
