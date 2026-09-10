@@ -71,7 +71,7 @@ export interface ThemeSettings {
 }
 
 const THEME_DEFAULTS: ThemeSettings = {
-  mode: "system",
+  mode: "light",
   accent: "violet",
   reduceMotion: false,
   largerText: false,
