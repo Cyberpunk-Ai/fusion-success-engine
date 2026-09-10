@@ -49,6 +49,42 @@ function AuthPage() {
     });
   }
 
+  // Finishes a social sign-in that came back through a full-page redirect.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      if (!user || cancelled) return;
+      await ensureProfile(user.id, user.email ?? "member");
+      if (!cancelled) void navigate({ to: "/" });
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSocial(provider: "google" | "apple") {
+    setBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) throw result.error;
+      if (result.redirected) return;
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      if (user) await ensureProfile(user.id, user.email ?? "member");
+      toast.success("Signed in");
+      void navigate({ to: "/" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Social sign-in failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
