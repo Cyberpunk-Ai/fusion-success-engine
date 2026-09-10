@@ -1214,7 +1214,13 @@ function MessagesPage() {
           partner={activeCall.user}
           type={activeCall.type}
           isOpen={Boolean(activeCall)}
-          onClose={() => setActiveCall(null)}
+          role="caller"
+          onClose={() => {
+            const kind = activeCall.type;
+            setActiveCall(null);
+            // Leave a trace of the call in the thread, like other chat apps do.
+            void logCallInThread(kind);
+          }}
         />
       )}
 
