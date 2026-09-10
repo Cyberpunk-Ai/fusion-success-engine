@@ -22,6 +22,7 @@ import {
   Check,
   MoreVertical,
   Play,
+  Image as ImageIcon,
 } from "lucide-react";
 import { AppShell } from "@/components/social/AppShell";
 import { Avatar } from "@/components/social/Avatar";
