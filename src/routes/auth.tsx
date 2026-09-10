@@ -138,6 +138,48 @@ function AuthPage() {
           ))}
         </div>
 
+        <div className="mb-4 space-y-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void handleSocial("google")}
+            className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-bold transition-colors hover:bg-foreground/5 disabled:opacity-60"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+              <path
+                fill="#4285F4"
+                d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.4a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.6-5.2 3.6-8.8z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2a7 7 0 0 1-6.6-4.8H1.4v3.1A12 12 0 0 0 12 24z"
+              />
+              <path fill="#FBBC05" d="M5.4 14.5a7.2 7.2 0 0 1 0-4.6V6.8H1.4a12 12 0 0 0 0 10.4l4-2.7z" />
+              <path
+                fill="#EA4335"
+                d="M12 4.8c1.8 0 3.4.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.8l4 3.1A7 7 0 0 1 12 4.8z"
+              />
+            </svg>
+            Continue with Google
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void handleSocial("apple")}
+            className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-foreground px-4 py-2.5 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
+              <path d="M16.4 12.7c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.9-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.6 2.3 2.8 2.2 1.1 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.8-2.2.6-.9.9-1.4 1.3-2.4-2.3-.9-2.8-3.5-2.8-3.6zM14.2 5.6c.6-.8 1-1.8.9-2.9-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-.9 2.8 1.1.1 2.2-.5 2.8-1.3z" />
+            </svg>
+            Continue with Apple
+          </button>
+          <div className="flex items-center gap-3 pt-1">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-muted-foreground">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === "signup" && (
             <input
