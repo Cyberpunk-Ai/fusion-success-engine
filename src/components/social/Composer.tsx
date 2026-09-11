@@ -199,6 +199,28 @@ export function Composer({
     toast.success("AI draft inserted!");
   }
 
+  // Signed-out visitors get a clear invitation instead of a composer that fails on submit.
+  if (!user) {
+    return (
+      <div className="glass-panel rounded-3xl p-4 shadow-soft sm:p-5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold sm:text-base">Join the conversation</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Sign in to post, reply and start Spaces.
+            </p>
+          </div>
+          <Link
+            to="/auth"
+            className="shrink-0 rounded-full bg-gradient-to-r from-brand to-brand-pink px-4 py-2 text-xs font-bold text-white shadow-soft transition-all hover:brightness-105 active:scale-[0.97] sm:px-5 sm:text-sm"
+          >
+            Sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <form
