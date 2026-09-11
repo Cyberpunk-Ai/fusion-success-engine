@@ -514,6 +514,35 @@ function MessagesPage() {
     }
   }
 
+  /** Leaves a short record of a finished call in the thread, like other chat apps. */
+  async function logCallInThread(kind: "audio" | "video") {
+    if (!activeId) return;
+    const body = `${kind === "audio" ? AUDIO_CALL_PREFIX : VIDEO_CALL_PREFIX} ended`;
+    const tempId = `temp_call_${Date.now()}`;
+    setAll((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        conversation_id: activeId,
+        sender_id: currentUserId,
+        body,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeId ? { ...c, preview: body, updated_at: new Date().toISOString() } : c)),
+    );
+    try {
+      const res: any = await sendMessage(activeId, body);
+      const serverMsg = res?.message || res;
+      if (serverMsg?.id) {
+        setAll((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: serverMsg.id } : m)));
+      }
+    } catch {
+      // optimistic entry stays visible
+    }
+  }
+
   const handleToggleReaction = (msgId: string, emoji: string) => {
     setReactions((prev) => {
       const msgMap = { ...(prev[msgId] || {}) };
