@@ -811,6 +811,13 @@ function MessagesPage() {
                 {list.map((c) => {
                   const p = getProfile(c.participant_id);
                   const isActive = c.id === activeId;
+                  const convMsgs = all.filter((m) => m.conversation_id === c.id);
+                  const lastMsg = convMsgs.length ? convMsgs[convMsgs.length - 1] : null;
+                  const preview = describePreview(lastMsg, c.preview);
+                  const mine = lastMsg?.sender_id === currentUserId;
+                  // Proxy for read state: a later reply from the partner means they saw it.
+                  const seenByPartner =
+                    mine && convMsgs.some((m) => m.sender_id !== currentUserId && m.created_at > (lastMsg?.created_at ?? ""));
                   return (
                     <button
                       key={c.id}
