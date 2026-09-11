@@ -847,9 +847,16 @@ function MessagesPage() {
                             className="shrink-0 text-[0.7rem] text-muted-foreground"
                           />
                         </span>
-                        <span className="mt-0.5 flex items-center gap-2">
-                          <span className="line-clamp-1 flex-1 text-xs text-muted-foreground">
-                            {c.preview}
+                        <span className="mt-0.5 flex items-center gap-1.5">
+                          {mine &&
+                            (seenByPartner ? (
+                              <CheckCheck className="h-3.5 w-3.5 shrink-0 text-brand" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            ))}
+                          <PreviewIcon kind={preview.kind} />
+                          <span className="line-clamp-1 min-w-0 flex-1 text-xs text-muted-foreground">
+                            {preview.label}
                           </span>
                           {c.unread > 0 && (
                             <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gradient-to-r from-brand to-brand-pink px-1.5 text-[0.65rem] font-bold text-white">
