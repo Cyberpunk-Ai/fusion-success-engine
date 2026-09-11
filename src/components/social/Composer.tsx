@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { Image as ImageIcon, Video, Smile, MapPin, Sparkles, Loader2, X, Palette, BarChart2, Plus, Trash2, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/social/Avatar";
