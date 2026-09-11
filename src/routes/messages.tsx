@@ -514,6 +514,35 @@ function MessagesPage() {
     }
   }
 
+  /** Leaves a short record of a finished call in the thread, like other chat apps. */
+  async function logCallInThread(kind: "audio" | "video") {
+    if (!activeId) return;
+    const body = `${kind === "audio" ? AUDIO_CALL_PREFIX : VIDEO_CALL_PREFIX} ended`;
+    const tempId = `temp_call_${Date.now()}`;
+    setAll((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        conversation_id: activeId,
+        sender_id: currentUserId,
+        body,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeId ? { ...c, preview: body, updated_at: new Date().toISOString() } : c)),
+    );
+    try {
+      const res: any = await sendMessage(activeId, body);
+      const serverMsg = res?.message || res;
+      if (serverMsg?.id) {
+        setAll((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: serverMsg.id } : m)));
+      }
+    } catch {
+      // optimistic entry stays visible
+    }
+  }
+
   const handleToggleReaction = (msgId: string, emoji: string) => {
     setReactions((prev) => {
       const msgMap = { ...(prev[msgId] || {}) };
@@ -782,6 +811,13 @@ function MessagesPage() {
                 {list.map((c) => {
                   const p = getProfile(c.participant_id);
                   const isActive = c.id === activeId;
+                  const convMsgs = all.filter((m) => m.conversation_id === c.id);
+                  const lastMsg = convMsgs.length ? convMsgs[convMsgs.length - 1] : null;
+                  const preview = describePreview(lastMsg, c.preview);
+                  const mine = lastMsg?.sender_id === currentUserId;
+                  // Proxy for read state: a later reply from the partner means they saw it.
+                  const seenByPartner =
+                    mine && convMsgs.some((m) => m.sender_id !== currentUserId && m.created_at > (lastMsg?.created_at ?? ""));
                   return (
                     <button
                       key={c.id}
@@ -811,9 +847,16 @@ function MessagesPage() {
                             className="shrink-0 text-[0.7rem] text-muted-foreground"
                           />
                         </span>
-                        <span className="mt-0.5 flex items-center gap-2">
-                          <span className="line-clamp-1 flex-1 text-xs text-muted-foreground">
-                            {c.preview}
+                        <span className="mt-0.5 flex items-center gap-1.5">
+                          {mine &&
+                            (seenByPartner ? (
+                              <CheckCheck className="h-3.5 w-3.5 shrink-0 text-brand" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            ))}
+                          <PreviewIcon kind={preview.kind} />
+                          <span className="line-clamp-1 min-w-0 flex-1 text-xs text-muted-foreground">
+                            {preview.label}
                           </span>
                           {c.unread > 0 && (
                             <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gradient-to-r from-brand to-brand-pink px-1.5 text-[0.65rem] font-bold text-white">

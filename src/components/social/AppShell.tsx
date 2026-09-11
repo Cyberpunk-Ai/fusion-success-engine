@@ -243,6 +243,11 @@ export function AppShell({
   const [open, setOpen] = useState(false);
   const { notifications: unreadNotifications, messages: unreadMessages } = useUnreadCounts();
   const { isDark, toggleTheme } = useTheme();
+  const { pathname } = useLocation();
+  // The floating compose button only makes sense on browsing surfaces.
+  const showComposeFab = ["/feed", "/explore", "/profile", "/bookmarks", "/notifications"].includes(
+    pathname,
+  );
 
   const mobileItems: NavItem[] = [
     { label: "Home", to: "/feed", icon: Home },
